@@ -1,0 +1,626 @@
+:root {
+    --primary-glow: #ff00ff;
+    --secondary-glow: #00ffff;
+    --background-color: #0a001a;
+    --font-color: #f0f0f0;
+    --ui-background: rgba(20, 0, 40, 0.8);
+    --border-color: var(--primary-glow);
+    --player-health: #00ff00;
+    --enemy-health: #ff4141;
+    --ultimate-color: #ffaa00;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--font-color);
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 0 20px var(--border-color);
+}
+
+#game-canvas {
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+#background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    background-color: #000;
+}
+
+
+#react-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allow clicks to pass through to the canvas by default */
+    z-index: 2;
+}
+
+#ui-overlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+}
+
+#ui-overlay.low-health::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 100px 50px rgba(255, 0, 0, 0.4);
+    pointer-events: none;
+    animation: pulse-vignette 2s infinite;
+    z-index: 100;
+}
+
+@keyframes pulse-vignette {
+    0% { box-shadow: inset 0 0 80px 40px rgba(255, 0, 0, 0.3); }
+    50% { box-shadow: inset 0 0 120px 60px rgba(255, 0, 0, 0.5); }
+    100% { box-shadow: inset 0 0 80px 40px rgba(255, 0, 0, 0.3); }
+}
+
+
+/* Heads Up Display (Health bars etc) */
+.hud {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.player-hud-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-bar-container {
+    background: var(--ui-background);
+    padding: 10px 15px;
+    border: 1px solid var(--secondary-glow);
+    box-shadow: 0 0 10px var(--secondary-glow);
+    display: flex;
+    flex-direction: column;
+    min-width: 250px;
+}
+
+.health-bar-container label {
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px var(--secondary-glow);
+}
+
+.player-health-container {
+    align-self: flex-start;
+}
+
+.ultimate-bar-container {
+    border-color: var(--ultimate-color);
+    box-shadow: 0 0 10px var(--ultimate-color);
+}
+.ultimate-bar-container label {
+    color: var(--ultimate-color);
+    text-shadow: 0 0 5px var(--ultimate-color);
+}
+
+.shard-display-container {
+    background: var(--ui-background);
+    padding: 8px 15px;
+    border: 1px solid var(--primary-glow);
+    box-shadow: 0 0 10px var(--primary-glow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    align-self: flex-start;
+}
+
+.shard-display-container label {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: var(--primary-glow);
+    text-shadow: 0 0 5px var(--primary-glow);
+}
+
+.shard-count {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--font-color);
+}
+
+
+.boss-health-container {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    max-width: 500px;
+    align-items: center;
+}
+
+
+.health-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #333;
+    border: 1px solid var(--secondary-glow);
+    padding: 2px;
+}
+
+.ultimate-bar {
+    border-color: var(--ultimate-color);
+}
+
+.player-health-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--player-health), limegreen);
+    transition: width 0.2s ease-out;
+    box-shadow: 0 0 8px var(--player-health);
+}
+
+.boss-health-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--enemy-health), crimson);
+    transition: width 0.2s ease-out;
+    box-shadow: 0 0 8px var(--enemy-health);
+}
+
+.ultimate-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ultimate-color), gold);
+    transition: width 0.2s linear;
+    box-shadow: 0 0 8px var(--ultimate-color);
+}
+
+.ultimate-bar-fill.full {
+    animation: pulse-ultimate 1.5s infinite;
+}
+
+@keyframes pulse-ultimate {
+    0% { box-shadow: 0 0 8px var(--ultimate-color); }
+    50% { box-shadow: 0 0 16px var(--ultimate-color), 0 0 20px gold; }
+    100% { box-shadow: 0 0 8px var(--ultimate-color); }
+}
+
+.power-up-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.power-up-icon {
+    background: var(--ui-background);
+    border: 1px solid var(--secondary-glow);
+    color: var(--secondary-glow);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.wave-info {
+    position: absolute;
+    top: 20px; 
+    right: 20px; 
+    left: auto;
+    transform: none;
+    background: var(--ui-background);
+    padding: 5px 15px;
+    border: 1px solid var(--secondary-glow);
+    box-shadow: 0 0 10px var(--secondary-glow);
+    text-align: center;
+    border-radius: 5px;
+    color: var(--font-color);
+    text-shadow: 0 0 5px var(--secondary-glow);
+    display: flex;
+    gap: 1rem;
+    pointer-events: none;
+}
+
+/* Screens (Game Over, Victory, Modals) */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    pointer-events: all; /* Screens are interactive */
+}
+
+.screen h1 {
+    font-size: 4rem;
+    color: var(--primary-glow);
+    text-shadow: 0 0 15px var(--primary-glow), 0 0 25px var(--primary-glow);
+    letter-spacing: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.screen h2 {
+    font-size: 2rem;
+    color: var(--secondary-glow);
+    text-shadow: 0 0 10px var(--secondary-glow);
+    margin-bottom: 2rem;
+}
+
+.screen p {
+    font-size: 1.2rem;
+    color: var(--font-color);
+    margin-bottom: 2rem;
+    max-width: 80%;
+}
+
+.screen button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    padding: 15px 30px;
+    background: transparent;
+    border: 2px solid var(--primary-glow);
+    color: var(--primary-glow);
+    cursor: pointer;
+    text-shadow: 0 0 10px var(--primary-glow);
+    box-shadow: 0 0 15px var(--primary-glow), inset 0 0 10px rgba(255, 0, 255, 0.5);
+    transition: all 0.2s ease-in-out;
+    pointer-events: all;
+}
+
+.screen button:hover, .screen button:focus {
+    background: var(--primary-glow);
+    color: var(--background-color);
+    box-shadow: 0 0 25px var(--primary-glow), 0 0 40px var(--primary-glow);
+    outline: none;
+}
+
+.test-mode-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--secondary-glow);
+    background: var(--ui-background);
+}
+
+.test-mode-controls h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.test-mode-controls button {
+    font-size: 1rem;
+    padding: 10px 20px;
+    border-color: var(--secondary-glow);
+    color: var(--secondary-glow);
+    text-shadow: 0 0 10px var(--secondary-glow);
+    box-shadow: 0 0 15px var(--secondary-glow), inset 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.test-mode-controls button:hover, .test-mode-controls button:focus {
+    background: var(--secondary-glow);
+    color: var(--background-color);
+    box-shadow: 0 0 25px var(--secondary-glow), 0 0 40px var(--secondary-glow);
+}
+
+.close-test-chamber-button {
+    font-size: 1.2rem !important;
+    padding: 10px 20px !important;
+}
+
+.interaction-prompt {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ui-background);
+    padding: 10px 20px;
+    border: 1px solid #ffff00;
+    box-shadow: 0 0 15px #ffff00;
+    border-radius: 5px;
+    color: #ffff00;
+    font-size: 1.2rem;
+    text-shadow: 0 0 5px #ffff00;
+    pointer-events: none;
+    text-align: center;
+    transition: opacity 0.2s ease-in-out;
+}
+
+
+/* Upgrade List Styling (Shared) */
+.upgrade-item {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 150px;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--secondary-glow);
+    padding: 15px;
+    text-align: left;
+}
+.upgrade-item h3 {
+    font-size: 1.1rem;
+    color: var(--secondary-glow);
+    text-shadow: 0 0 5px var(--secondary-glow);
+}
+.upgrade-item p {
+    font-size: 0.9rem;
+    margin: 0;
+    color: #ccc;
+}
+.upgrade-info {
+    font-size: 1rem;
+    text-align: center;
+}
+.upgrade-button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 10px 15px;
+    border-color: var(--secondary-glow);
+    color: var(--secondary-glow);
+    text-shadow: 0 0 8px var(--secondary-glow);
+    box-shadow: 0 0 10px var(--secondary-glow), inset 0 0 8px rgba(0, 255, 255, 0.4);
+}
+.upgrade-button:hover, .upgrade-button:focus {
+    background: var(--secondary-glow);
+    color: var(--background-color);
+    box-shadow: 0 0 20px var(--secondary-glow);
+}
+.upgrade-button:disabled {
+    border-color: #555;
+    color: #555;
+    cursor: not-allowed;
+    text-shadow: none;
+    box-shadow: none;
+    opacity: 0.7;
+}
+.upgrade-button:disabled:hover {
+    background: transparent;
+}
+
+
+/* Shard Synthesizer Modal */
+.shard-synthesizer-modal p {
+    font-size: 1rem;
+    max-width: 60%;
+    margin-bottom: 1.5rem;
+    color: #ccc;
+}
+.synthesizer-content {
+    width: 80%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.synthesizer-shard-counter {
+    font-size: 1.2rem;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--primary-glow);
+    color: var(--primary-glow);
+    text-shadow: 0 0 5px var(--primary-glow);
+}
+.upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.close-synthesizer-button {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    padding: 10px 25px;
+}
+
+/* Intermission Screen */
+.intermission-screen h1 {
+    color: var(--secondary-glow);
+    text-shadow: 0 0 15px var(--secondary-glow), 0 0 25px var(--secondary-glow);
+}
+.intermission-screen p {
+    font-size: 1.2rem;
+    max-width: 60%;
+    margin-bottom: 1.5rem;
+    color: #ccc;
+}
+.intermission-content {
+    width: 80%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    background: var(--ui-background);
+    padding: 2rem;
+    border: 1px solid var(--secondary-glow);
+    box-shadow: 0 0 15px var(--secondary-glow);
+}
+.intermission-shard-counter {
+    font-size: 1.2rem;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--primary-glow);
+    color: var(--primary-glow);
+    text-shadow: 0 0 5px var(--primary-glow);
+}
+.intermission-upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.proceed-button {
+    margin-top: 1rem;
+    font-size: 1.5rem;
+    padding: 15px 30px;
+    border-color: var(--secondary-glow);
+    color: var(--secondary-glow);
+    text-shadow: 0 0 10px var(--secondary-glow);
+    box-shadow: 0 0 15px var(--secondary-glow), inset 0 0 10px rgba(0, 255, 255, 0.5);
+}
+.proceed-button:hover, .proceed-button:focus {
+    background: var(--secondary-glow);
+    color: var(--background-color);
+    box-shadow: 0 0 25px var(--secondary-glow), 0 0 40px var(--secondary-glow);
+}
+
+/* Sanctum of Echoes Modal */
+.sanctum-modal h1 {
+    color: var(--secondary-glow);
+    text-shadow: 0 0 15px var(--secondary-glow), 0 0 25px var(--secondary-glow);
+}
+
+.sanctum-modal p {
+    font-size: 1rem;
+    max-width: 60%;
+    margin-bottom: 1.5rem;
+    color: #ccc;
+}
+
+.sanctum-content {
+    width: 80%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.sanctum-response-area {
+    min-height: 200px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--secondary-glow);
+    padding: 1.5rem;
+    font-family: 'Courier New', Courier, monospace;
+    color: #9feeff;
+    text-shadow: 0 0 5px #9feeff;
+    overflow-y: auto;
+    text-align: left;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.sanctum-cursor {
+    display: inline-block;
+    width: 10px;
+    height: 1.2em;
+    background-color: #9feeff;
+    animation: blink 1s step-end infinite;
+    vertical-align: bottom;
+}
+
+@keyframes blink {
+    from, to { background-color: transparent }
+    50% { background-color: #9feeff; }
+}
+
+.sanctum-input-container {
+    display: flex;
+    gap: 1rem;
+}
+
+.sanctum-input {
+    flex-grow: 1;
+    background: transparent;
+    border: 1px solid var(--secondary-glow);
+    padding: 10px 15px;
+    color: var(--font-color);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    pointer-events: all;
+}
+
+.sanctum-input:focus {
+    box-shadow: 0 0 10px var(--secondary-glow);
+}
+
+.sanctum-query-button, .close-sanctum-button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid var(--secondary-glow);
+    color: var(--secondary-glow);
+    cursor: pointer;
+    text-shadow: 0 0 10px var(--secondary-glow);
+    transition: all 0.2s ease-in-out;
+    pointer-events: all;
+}
+
+.sanctum-query-button:hover, .close-sanctum-button:hover {
+    background: var(--secondary-glow);
+    color: var(--background-color);
+    box-shadow: 0 0 20px var(--secondary-glow);
+}
+
+.sanctum-query-button:disabled, .sanctum-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sanctum-query-button:disabled:hover {
+    background: transparent;
+    color: var(--secondary-glow);
+    box-shadow: none;
+}
+
+.sanctum-loading {
+    color: var(--secondary-glow);
+    text-shadow: 0 0 10px var(--secondary-glow);
+    font-size: 1.5rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
